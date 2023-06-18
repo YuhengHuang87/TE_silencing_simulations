@@ -1,0 +1,199 @@
+initialize() {
+	defineConstant("PopSize", 1e4); // population size
+
+	defineConstant("L", 5e7); // chromosome length
+	defineConstant("teInitialCount", 1); // initial number of TEs
+	defineConstant("a", 0.02); //determining relation between TE numbers and silencing magnitude
+	
+	defineConstant("u", 0.01); // TE jump probability
+	defineConstant("k", 0.2); // silencing efficiency 	
+	defineConstant("s", 0.01);
+	defineConstant("b", 20); //silencing cost selection ratio
+	
+	defineConstant("r", 1e-6); //background recombination rates
+	initializeRecombinationRate(r);
+
+	initializeMutationRate(0);
+
+	// m1 mutation type: neutral
+	initializeMutationType("m1", 0.5, "f", 0.0);
+	initializeMutationType("m4", 0.5, "f", 0.0); // alternative modifier allele's domimance coefficient and mutational effect
+	m4.convertToSubstitution = F;
+	m4.color = "#FF33FF";
+	// g1 genomic element type: uses m1 for all mutations
+	initializeGenomicElementType("g1", m1, 1.0);
+	
+	initializeGenomicElement(g1, 0, L-1);
+		initializeSex("A");
+	
+	// transposon mutation type; also neutral, but red
+initializeMutationType("m2", 0.5, "f", 0.0);
+m2.convertToSubstitution = F;
+m2.color = "#FF0000";
+}
+
+// create a population
+1 late(){
+	sim.addSubpop("p1", PopSize);
+	sim.tag = 0; // the next unique tag value to use for TEs
+// create some transposons at random positions
+genomes = sim.subpopulations.genomes;
+//modifier=genomes.addNewDrawnMutation(m4, 5e5);
+
+genome_count = 0;
+for (genome in sim.subpopulations.genomes)
+{
+genome_count=genome_count+1;
+positions = rdunif(teInitialCount, 0, L-1);
+for (teIndex in 0:(teInitialCount-1))
+{
+pos = positions[teIndex];
+mut = genome.addNewDrawnMutation(m2, pos);
+
+mut.tag = sim.tag;
+sim.tag = sim.tag + 1;
+mut.setValue("M",rpois(1, a*teInitialCount*2));
+}
+}
+
+for (individual in sim.subpopulations.individuals)
+{
+muts = individual.genomes.mutationsOfType(m2);
+phenotype = size(muts) ? mean(muts.getValue("M")) else NULL;
+individual.setValue("phenotype",phenotype);
+}
+}
+
+
+fitnessEffect() {
+individual_fitness=1.0;
+tes = individual.genomes.mutationsOfType(m2);
+teCount = tes.size();
+//cat(teCount);
+//cat("\n");
+if (teCount>0)
+{
+for (te in tes)
+{
+
+silence_mag=te.getValue("M");
+
+s_e = s*(1+silence_mag*b);
+if ((1-s_e)>=0)
+{
+individual_fitness=individual_fitness*(1-s_e);
+}
+else
+{
+individual_fitness=individual_fitness*0;
+}
+}
+}
+w = individual_fitness;
+
+if (w > 0.0)
+{
+return w;
+}
+else
+{
+return 0.0;
+}
+}
+
+2:5002 early() {
+meanFitness = mean(p1.cachedFitness(NULL));
+line = paste(sim.cycle,meanFitness,"mean_fitness", replicat);
+file=paste("/dfs7/grylee/yuhenh3/TE_simulations/multiplicative",s,b,u,k,r,sep = "_");
+writeFile(file, line, append=T);
+}
+
+1:5001 late() {
+inds = sim.subpopulations.individuals;
+additive = inds.countOfMutationsOfType(m2);
+mean_A = mean(additive);
+V_A = sd(additive)^2;
+
+ind_count=0;ind_mag=0;
+for (individual in inds)
+{
+avg_mag=individual.getValue("phenotype");
+if (isFloat(avg_mag))
+{
+ind_mag=ind_mag+avg_mag;
+ind_count=ind_count+1;
+}
+}
+
+M_mean=ind_mag/ind_count;
+ls = sim.mutationsOfType(m2);
+f = sim.mutationFrequencies(NULL, ls);
+Freq_mean = mean(f);
+line1 = paste(sim.cycle, mean_A, V_A, Freq_mean, replicat);
+file=paste("/dfs7/grylee/yuhenh3/TE_simulations/multiplicative",s,b,u,k,r,sep = "_");
+writeFile(file, line1, append=T);
+}
+
+5000 late() {
+// save the state of the simulation
+sim.outputFull("/dfs7/grylee/yuhenh3/TE_simulations/tmp/FullOutput_5000_additive"+s+"_"+b+"_"+u+"_"+k+"_"+r+"_"+".txt");
+
+ls = sim.mutationsOfType(m2);
+TE_freq = sim.mutationFrequencies(NULL, ls);
+Freq_mean = mean(TE_freq);
+frequency = paste("Epi_TE_Freq",TE_freq,Freq_mean, replicat);
+file=paste("/dfs7/grylee/yuhenh3/TE_simulations/tmp/TE_freq_5000_multiplicative",s,b,u,k,r,sep = "_");
+writeFile(file, frequency, append=T);
+}
+
+
+
+late() {
+// make active transposons copy themselves with rate teJumpP
+for (individual in sim.subpopulations.individuals)
+{
+for (genome in individual.genomes)
+{
+tes = genome.mutationsOfType(m2);
+for (te in tes)
+{
+//teCount = tes.size();
+te_silencing = te.getValue("M");
+if (te_silencing*k<1)
+{
+jumpCount = rpois(1, u*(1-te_silencing*k));
+
+if (jumpCount>0)
+{
+// make a new TE mutation
+pos = rdunif(1, 0, L-1);
+jumpTE = genome.addNewDrawnMutation(m2, pos);
+jumpTE.tag = sim.tag;
+sim.tag = sim.tag + 1;
+jumpTE.setValue("M",te_silencing);
+}
+}
+}
+}
+muts = individual.genomes.mutationsOfType(m2);
+phenotype = size(muts) ? mean(muts.getValue("M")) else NULL;
+individual.setValue("phenotype",phenotype);
+}
+}
+
+modifyChild() {
+TE_num = child.genome1.countOfMutationsOfType(m2)+child.genome2.countOfMutationsOfType(m2);
+
+for (genome in child.genomes)
+{
+tes = genome.mutationsOfType(m2);
+for (te in tes)
+{
+te.setValue("M",rpois(1, a*TE_num));
+}
+}
+return T;
+}
+
+
+
