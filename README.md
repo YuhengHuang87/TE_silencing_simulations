@@ -1,7 +1,7 @@
 # TE_silencing_simulations
 I. study the TE dynamics under different parameter combinations for additive, multiplicative, and synergistic fitness models
   slim -d replicat= <<1 to 20>> $SLiM_file
-  $SLiM_file can be: 
+  where $SLiM_file can be: 
     TE_dynamics_additive_models.txt
     TE_dynamics_multiplicative_models.txt
     TE_dynamics_synergistic_models.txt
