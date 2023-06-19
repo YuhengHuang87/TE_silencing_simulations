@@ -86,7 +86,7 @@ if (teCount>0)
 for (te in tes)
 {
 slience_mag=te.getValue("M");
-if (slience_mag*P < 1)
+if (slience_mag < 5)//remove this if condition when TE silencing not suppresses ectopic recombination
 {
 te_num_NoEpi=te_num_NoEpi+1;
 }
@@ -99,7 +99,7 @@ tes = individual.genomes[0].mutationsOfType(m2);
 for (te in tes)
 {
 slience_mag=te.getValue("M");
-if (slience_mag < 5)
+if (slience_mag < 5) //remove this if condition when TE silencing not suppresses ectopic recombination
 {
 focalPosition = te.position;
 alter_tes = individual.genomes[1].mutationsOfType(m2);
@@ -118,7 +118,7 @@ tes = individual.genomes[1].mutationsOfType(m2);
 for (te in tes)
 {
 slience_mag=te.getValue("M");
-if (slience_mag < 5)
+if (slience_mag < 5) //remove this if condition when TE silencing not suppresses ectopic recombination
 {
 focalPosition = te.position;
 alter_tes = individual.genomes[0].mutationsOfType(m2);
