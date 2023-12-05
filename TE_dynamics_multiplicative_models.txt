@@ -2,13 +2,13 @@ initialize() {
 	defineConstant("PopSize", 1e4); // population size
 
 	defineConstant("L", 5e7); // chromosome length
-	defineConstant("teInitialCount", 1); // initial number of TEs
+	defineConstant("teInitialCount", 5); // initial number of TEs
 	defineConstant("a", 0.02); //determining relation between TE numbers and silencing magnitude
 	
-	defineConstant("u", 0.01); // TE jump probability
-	defineConstant("k", 0.2); // silencing efficiency 	
-	defineConstant("s", 0.01);
-	defineConstant("b", 20); //silencing cost selection ratio
+	defineConstant("u", 0.0001); // TE jump probability
+	defineConstant("k", 0); // silencing efficiency 	
+	defineConstant("s", 0.0001);
+	defineConstant("b", 2); //silencing cost selection ratio
 	
 	defineConstant("r", 1e-6); //background recombination rates
 	initializeRecombinationRate(r);
@@ -101,14 +101,14 @@ return 0.0;
 }
 }
 
-2:5002 early() {
+2:50002 early() {
 meanFitness = mean(p1.cachedFitness(NULL));
 line = paste(sim.cycle,meanFitness,"mean_fitness", replicat);
-file=paste("/dfs7/grylee/yuhenh3/TE_simulations/multiplicative",s,b,u,k,r,sep = "_");
+file=paste("/dfs7/grylee/yuhenh3/TE_simulations/multiplicative_equ/",u,k,s,b,r,teInitialCount,sep = "_");
 writeFile(file, line, append=T);
 }
 
-1:5001 late() {
+1:50001 late() {
 inds = sim.subpopulations.individuals;
 additive = inds.countOfMutationsOfType(m2);
 mean_A = mean(additive);
@@ -130,7 +130,7 @@ ls = sim.mutationsOfType(m2);
 f = sim.mutationFrequencies(NULL, ls);
 Freq_mean = mean(f);
 line1 = paste(sim.cycle, mean_A, V_A, Freq_mean, replicat);
-file=paste("/dfs7/grylee/yuhenh3/TE_simulations/multiplicative",s,b,u,k,r,sep = "_");
+file=paste("/dfs7/grylee/yuhenh3/TE_simulations/multiplicative_equ/",u,k,s,b,r,teInitialCount,sep = "_");
 writeFile(file, line1, append=T);
 }
 
@@ -142,7 +142,7 @@ ls = sim.mutationsOfType(m2);
 TE_freq = sim.mutationFrequencies(NULL, ls);
 Freq_mean = mean(TE_freq);
 frequency = paste("Epi_TE_Freq",TE_freq,Freq_mean, replicat);
-file=paste("/dfs7/grylee/yuhenh3/TE_simulations/tmp/TE_freq_5000_multiplicative",s,b,u,k,r,sep = "_");
+file=paste("/dfs7/grylee/yuhenh3/TE_simulations/tmp/TE_freq_5000_multiplicative",u,k,s,b,r,teInitialCount,sep = "_");
 writeFile(file, frequency, append=T);
 }
 

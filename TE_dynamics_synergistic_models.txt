@@ -1,19 +1,16 @@
 initialize() {
-	defineConstant("PopSize", 1e4); // population size
+	defineConstant("PopSize", 50); // population size
 
-	defineConstant("L", 5e7); // chromosome length
 	defineConstant("teInitialCount", 1); // initial number of TEs
-	defineConstant("a", 0.02); //determining relation between TE numbers and silencing magnitude
 	
-	defineConstant("u", 0.01); // TE jump probability
-	defineConstant("k", 0); // silencing efficiency 	
-	defineConstant("s", 0.01);
-	defineConstant("b", 0); //silencing cost selection ratio
-	
-	defineConstant("r", 1e-6); //background recombination rates
+	defineConstant("u", 0.005); // TE jump probability
+	defineConstant("s", 0.001);
+	defineConstant("r", 1e-7); //background recombination rates
 	initializeRecombinationRate(r);
 
 	initializeMutationRate(0);
+	defineConstant("L", 5e7); // chromosome length
+	defineConstant("a", 0.02); //determining relation between TE numbers and silencing magnitude
 
 	// m1 mutation type: neutral
 	initializeMutationType("m1", 0.5, "f", 0.0);
@@ -69,7 +66,7 @@ fitnessEffect() {
 individual_fitness=1.0;
 tes = individual.genomes.mutationsOfType(m2);
 teCount = tes.size();
-w = individual_fitness+TE_selCoeff*(teCount^2);
+w = individual_fitness-s*(teCount^1.5);
 
 
 if (w > 0.0)
@@ -85,7 +82,7 @@ return 0.0;
 2:5002 early() {
 meanFitness = mean(p1.cachedFitness(NULL));
 line = paste(sim.cycle,meanFitness,"mean_fitness", replicat);
-file=paste("/dfs7/grylee/yuhenh3/TE_simulations/synergistic",s,u,r,sep = "_");
+file=paste("/dfs7/grylee/yuhenh3/TE_simulations/synergistic_equ/synergistic",u,s,r,PopSize,sep = "_");
 writeFile(file, line, append=T);
 }
 
@@ -111,19 +108,19 @@ ls = sim.mutationsOfType(m2);
 f = sim.mutationFrequencies(NULL, ls);
 Freq_mean = mean(f);
 line1 = paste(sim.cycle, mean_A, V_A, Freq_mean, replicat);
-file=paste("/dfs7/grylee/yuhenh3/TE_simulations/synergistic",s,u,r,sep = "_");
+file=paste("/dfs7/grylee/yuhenh3/TE_simulations/synergistic_equ/synergistic",u,s,r,PopSize,sep = "_");
 writeFile(file, line1, append=T);
 }
 
 5000 late() {
 // save the state of the simulation
-sim.outputFull("/dfs7/grylee/yuhenh3/TE_simulations/tmp/FullOutput_5000_synergistic"+s+"_"+u+"_"+r+"_"+".txt");
+sim.outputFull("/dfs7/grylee/yuhenh3/TE_simulations/synergistic_equ/tmp/FullOutput_5000_synergistic"+u+"_"+s+"_"+r+"_"+".txt");
 
 ls = sim.mutationsOfType(m2);
 TE_freq = sim.mutationFrequencies(NULL, ls);
 Freq_mean = mean(TE_freq);
 frequency = paste("Epi_TE_Freq",TE_freq,Freq_mean, replicat);
-file=paste("/dfs7/grylee/yuhenh3/TE_simulations/tmp/TE_freq_5000_synergistic",s,u,r,sep = "_");
+file=paste("/dfs7/grylee/yuhenh3/TE_simulations/synergistic_equ/tmp/TE_freq_5000_synergistic",u,s,r,PopSize,sep = "_");
 writeFile(file, frequency, append=T);
 }
 
@@ -140,9 +137,8 @@ for (te in tes)
 {
 //teCount = tes.size();
 te_silencing = te.getValue("M");
-if (te_silencing*k<1)
-{
-jumpCount = rpois(1, u*(1-te_silencing*k));
+
+jumpCount = rpois(1, u);
 
 if (jumpCount>0)
 {
@@ -155,7 +151,7 @@ jumpTE.setValue("M",te_silencing);
 }
 }
 }
-}
+
 muts = individual.genomes.mutationsOfType(m2);
 phenotype = size(muts) ? mean(muts.getValue("M")) else NULL;
 individual.setValue("phenotype",phenotype);

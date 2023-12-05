@@ -1,18 +1,19 @@
 initialize() {
 	defineConstant("PopSize", 1e4); // population size
-
-	defineConstant("L", 5e7); // chromosome length
-	defineConstant("teInitialCount", 1); // initial number of TEs
-	defineConstant("a", 0.02); //determining relation between TE numbers and silencing magnitude
+	defineConstant("teInitialCount", 5); // initial number of TEs
+	
 	
 	defineConstant("u", 0.01); // TE jump probability
-	defineConstant("k", 0.2); // silencing efficiency 	
+	defineConstant("k", 0); // silencing efficiency 	
 	defineConstant("s", 0.01);
-	defineConstant("b", 20); //silencing cost selection ratio
+	defineConstant("b", 0); //silencing cost selection ratio
 	
-	defineConstant("r", 1e-6); //background recombination rates
+	defineConstant("r", 1e-7); //background recombination rates
 	initializeRecombinationRate(r);
 
+	defineConstant("a", 0.02); //determining relation between TE numbers and silencing magnitude
+
+	defineConstant("L", 5e7); // chromosome length
 	initializeMutationRate(0);
 
 	// m1 mutation type: neutral
@@ -66,7 +67,6 @@ individual.setValue("phenotype",phenotype);
 
 
 fitnessEffect() {
-//baselineSelectionCoeff=0;
 AdditiveSelectionCoeff=0;
 tes = individual.genomes.mutationsOfType(m2);
 teCount = tes.size();
@@ -95,7 +95,7 @@ return 0.0;
 2:5002 early() {
 meanFitness = mean(p1.cachedFitness(NULL));
 line = paste(sim.cycle,meanFitness,"mean_fitness", replicat);
-file=paste("/dfs7/grylee/yuhenh3/TE_simulations/additive",s,b,u,k,r,sep = "_");
+file=paste("/dfs7/grylee/yuhenh3/TE_simulations/sliencing_additive_equ/",u,k,s,b,r,PopSize,teInitialCount,sep = "_");
 writeFile(file, line, append=T);
 }
 
@@ -121,19 +121,19 @@ ls = sim.mutationsOfType(m2);
 f = sim.mutationFrequencies(NULL, ls);
 Freq_mean = mean(f);
 line1 = paste(sim.cycle, mean_A, V_A, Freq_mean, replicat);
-file=paste("/dfs7/grylee/yuhenh3/TE_simulations/additive",s,b,u,k,r,sep = "_");
+file=paste("/dfs7/grylee/yuhenh3/TE_simulations/sliencing_additive_equ/",u,k,s,b,r,PopSize,teInitialCount,sep = "_");
 writeFile(file, line1, append=T);
 }
 
 5000 late() {
 // save the state of the simulation
-sim.outputFull("/dfs7/grylee/yuhenh3/TE_simulations/tmp/FullOutput_5000_additive"+s+"_"+b+"_"+u+"_"+k+"_"+r+"_"+".txt");
+sim.outputFull("/dfs7/grylee/yuhenh3/TE_simulations/sliencing_additive_equ/tmp/FullOutput_5000_additive"+u+"_"+k+"_"+s+"_"+b+"_"+r+"_"+PopSize+"_replicat"+replicat+"_"+".txt");
 
 ls = sim.mutationsOfType(m2);
 TE_freq = sim.mutationFrequencies(NULL, ls);
 Freq_mean = mean(TE_freq);
 frequency = paste("Epi_TE_Freq",TE_freq,Freq_mean, replicat);
-file=paste("/dfs7/grylee/yuhenh3/TE_simulations/tmp/TE_freq_5000_additive",s,b,u,k,r,sep = "_");
+file=paste("/dfs7/grylee/yuhenh3/TE_simulations/sliencing_additive_equ/tmp/TE_freq_5000_additive",u,k,s,b,r,PopSize,teInitialCount,sep = "_");
 writeFile(file, frequency, append=T);
 }
 

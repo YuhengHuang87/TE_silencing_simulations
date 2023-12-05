@@ -1,21 +1,21 @@
 initialize() {
-	defineConstant("PopSize", 1e4); // population size
-
-	defineConstant("L", 5e7); // chromosome length
 	defineConstant("teInitialCount", 1); // initial number of TEs
-	defineConstant("a", 0.02); //determining relation between TE numbers and silencing magnitude
 	
 	defineConstant("u", 0.01); // TE jump probability
 	defineConstant("k", 0.2); // silencing efficiency 	
-	defineConstant("s", 0.01);
-	defineConstant("b", 20); //silencing cost selection ratio
+	defineConstant("s", 0.001);
+	defineConstant("b", 0.2); //silencing cost selection ratio
 	
 	defineConstant("r", 1e-6); //background recombination rates
 	initializeRecombinationRate(r);
 
 	defineConstant("Ectopic_Rec_rate", 1e-3);
-
+	defineConstant("Ect_sup_threshold", 5); // 0 for no suppression on ectopic rec, set 5 or 1.5 for a threshold that silencing suppress ectopic rec
+	
 	initializeMutationRate(0);
+	defineConstant("PopSize", 1e4); // population size
+	defineConstant("L", 5e7); // chromosome length
+	defineConstant("a", 0.02); //determining relation between TE numbers and silencing magnitude
 
 	// m1 mutation type: neutral
 	initializeMutationType("m1", 0.5, "f", 0.0);
@@ -80,7 +80,8 @@ if (teCount>0)
 for (te in tes)
 {
 silence_mag=te.getValue("M");
-if (silence_mag < 5)//remove this if condition when TE silencing not suppresses ectopic recombination
+if (silence_mag < Ect_sup_threshold)
+//if (slience_mag < 6)
 {
 te_num_NoEpi=te_num_NoEpi+1;
 }
@@ -93,7 +94,8 @@ tes = individual.genomes[0].mutationsOfType(m2);
 for (te in tes)
 {
 slience_mag=te.getValue("M");
-if (slience_mag < 5)//remove this if condition when TE silencing not suppresses ectopic recombination
+if (slience_mag < Ect_sup_threshold)
+//if (slience_mag < 6)
 {
 focalPosition = te.position;
 alter_tes = individual.genomes[1].mutationsOfType(m2);
@@ -112,7 +114,8 @@ tes = individual.genomes[1].mutationsOfType(m2);
 for (te in tes)
 {
 slience_mag=te.getValue("M");
-if (slience_mag < 5)//remove this if condition when TE silencing not suppresses ectopic recombination
+if (slience_mag < Ect_sup_threshold)
+//if (slience_mag < 6)
 {
 focalPosition = te.position;
 alter_tes = individual.genomes[0].mutationsOfType(m2);
@@ -141,7 +144,7 @@ return 0.0;
 2:5002 early() {
 meanFitness = mean(p1.cachedFitness(NULL));
 line = paste(sim.cycle,meanFitness,"mean_fitness", replicat);
-file=paste("/dfs7/grylee/yuhenh3/TE_simulations/additive_with_ectopic_recombination",s,b,u,k,r,sep = "_");
+file=paste("/dfs7/grylee/yuhenh3/TE_simulations/additive_ectopic_recombination",u,k,s,b,r,Ectopic_Rec_rate,Ect_sup_threshold,sep = "_");
 writeFile(file, line, append=T);
 }
 
@@ -167,23 +170,21 @@ ls = sim.mutationsOfType(m2);
 f = sim.mutationFrequencies(NULL, ls);
 Freq_mean = mean(f);
 line1 = paste(sim.cycle, mean_A, V_A, Freq_mean, replicat);
-file=paste("/dfs7/grylee/yuhenh3/TE_simulations/additive_ectopic_recombination",s,b,u,k,r,sep = "_");
+file=paste("/dfs7/grylee/yuhenh3/TE_simulations/additive_ectopic_recombination",u,k,s,b,r,Ectopic_Rec_rate,Ect_sup_threshold,sep = "_");
 writeFile(file, line1, append=T);
 }
 
 5000 late() {
 // save the state of the simulation
-sim.outputFull("/dfs7/grylee/yuhenh3/TE_simulations/tmp/FullOutput_5000_additive_ectopic_recombination"+s+"_"+b+"_"+u+"_"+k+"_"+r+"_"+".txt");
+sim.outputFull("/dfs7/grylee/yuhenh3/TE_simulations/tmp/FullOutput_5000_additive_ectopic_recombination"+u+"_"+k+"_"+s+"_"+b+"_"+r+"_"+Ectopic_Rec_rate+"_"+Ect_sup_threshold+"_replicat"+replicat+".txt");
 
 ls = sim.mutationsOfType(m2);
 TE_freq = sim.mutationFrequencies(NULL, ls);
 Freq_mean = mean(TE_freq);
 frequency = paste("Epi_TE_Freq",TE_freq,Freq_mean, replicat);
-file=paste("/dfs7/grylee/yuhenh3/TE_simulations/tmp/TE_freq_5000_additive_ectopic_recombination",s,b,u,k,r,sep = "_");
+file=paste("/dfs7/grylee/yuhenh3/TE_simulations/tmp/TE_freq_5000_additive_ectopic_recombination",u,k,s,b,r,Ectopic_Rec_rate,Ect_sup_threshold,sep = "_");
 writeFile(file, frequency, append=T);
 }
-
-
 
 late() {
 // make active transposons copy themselves with rate teJumpP

@@ -1,22 +1,21 @@
 initialize() {
+	defineConstant("EffectSize", -0.5);//0.5 for enhancing alleles, -0.5 for weakening alleles
+
+	defineConstant("u", 0.001); // TE jump probability
+	defineConstant("k", 0); // silencing efficiency 	
+	defineConstant("s", 0.0001);
+	defineConstant("b", 0.2);
+	
+	defineConstant("r", 1e-6);
+	initializeRecombinationRate(r);
+	defineConstant("a", 0.02);
+
 	defineConstant("PopSize", 1e4); // population size
 	defineConstant("L", 5e7); // chromosome length
-	defineConstant("Modifier_iniFreq", 0.1); // modifier initial frequency
-	defineConstant("teInitialCount", 1); // initial number of TEs
-	defineConstant("a", 0.02);
-	
-	defineConstant("u", 0.01); // TE jump probability
-	defineConstant("k", 0.2); // silencing efficiency 	
-	defineConstant("s", -0.001);
-	defineConstant("b", 0);
-	
-	defineConstant("r", 5e-8);
-	initializeRecombinationRate(r);
-	
 		// set up our chromosome: 10 QTLs, surrounded by neutral regions
+defineConstant("Modifier_iniFreq", 0.1); // modifier initial frequency
 defineConstant("C", 1); // number of QTLs
 defineConstant("distance", asInteger(L/(C+1)));
-defineConstant("EffectSize", 0.5);//0.5 for enhancing alleles, -0.5 for weakening alleles
 pos = 0;
 q = NULL;
 for (i in 1:C)
@@ -48,7 +47,7 @@ m3.convertToSubstitution = F;
 // create a population
 1 late(){
 
-sim.readFromPopulationFile("/dfs7/grylee/yuhenh3/TE_simulations/tmp/FullOutput_5000_additive"+s+"_"+b+"_"+u+"_"+k+"_"+r+"_"+".txt");
+sim.readFromPopulationFile("/dfs7/grylee/yuhenh3/TE_simulations/sliencing_additive_equ/tmp/FullOutput_5000_additive"+u+"_"+k+"_"+s+"_"+b+"_"+r+"_"+PopSize+"_replicat"+replicat+"_"+".txt");
 
 	sim.tag = 0; // the next unique tag value to use for TEs
 // create some transposons at random positions
@@ -61,9 +60,10 @@ sample(p1.genomes, asInteger(2*PopSize*Modifier_iniFreq)).addNewDrawnMutation(m3
 for (individual in sim.subpopulations.individuals)
 {
 muts = individual.genomes.mutationsOfType(m2);
+TE_num = muts.size();
 for (te in muts)
 {
-te.setValue("M",0);
+te.setValue("M",rpois(1, a*TE_num));
 }
 }
 }
@@ -95,15 +95,15 @@ return 0.0;
 }
 }
 
-1002:10002 early() {
+5002:10002 early() {
 meanFitness = mean(p1.cachedFitness(NULL));
 line = paste(sim.cycle,meanFitness,"mean_fitness", replicat);
-file=paste("/dfs7/grylee/yuhenh3/TE_simulations/invade_enhancing_Magnitude_TE_additive",s,b,u,k,r,sep = "_");
+file=paste("/dfs7/grylee/yuhenh3/TE_simulations/sliencing_additive_equ/modifier_invasion/invade_weakening_Magnitude_TE_additive",u,k,s,b,r,PopSize,sep = "_");
 writeFile(file, line, append=T);
 }
 
 
-1000:10001 late() {
+5000:10001 late() {
 inds = sim.subpopulations.individuals;
 additive = inds.countOfMutationsOfType(m2);
 mean_A = mean(additive);
@@ -130,7 +130,7 @@ f = sim.mutationFrequencies(NULL, qtls);
 
 line1 = paste(sim.cycle,mean_A, V_A, TE_Freq_mean, replicat);
 line2 = paste(sim.cycle, M_mean, f, "modifier_Freq",replicat);
-file=paste("/dfs7/grylee/yuhenh3/TE_simulations/invade_enhancing_Magnitude_TE_additive",s,b,u,k,r,sep = "_");
+file=paste("/dfs7/grylee/yuhenh3/TE_simulations/sliencing_additive_equ/modifier_invasion/invade_weakening_Magnitude_TE_additive",u,k,s,b,r,PopSize,sep = "_");
 writeFile(file, line1, append=T);
 writeFile(file, line2, append=T);
 

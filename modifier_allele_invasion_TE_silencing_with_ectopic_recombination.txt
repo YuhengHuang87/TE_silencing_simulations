@@ -1,25 +1,24 @@
 initialize() {
+	defineConstant("EffectSize", -0.5);//0.5 for enhancing alleles, -0.5 for weakening alleles
+
+	defineConstant("u", 0.01); // TE jump probability
+	defineConstant("k", 0.2); // silencing efficiency 	
+	defineConstant("s", 0.001);
+	defineConstant("b", 0.2);
+	defineConstant("r", 1e-6);
+	initializeRecombinationRate(r);
+	defineConstant("Ectopic_Rec_rate", 1e-3);
+	defineConstant("Ect_sup_threshold", 5); // 0 for no suppression on ectopic rec, set 5 for a threshold that silencing suppress ectopic rec
+
 	defineConstant("PopSize", 1e4); // population size
 	defineConstant("L", 5e7); // chromosome length
 	//defineConstant("Modifier_posi", 25e6); // modifier position
 	defineConstant("Modifier_iniFreq", 0.1); // modifier initial frequency
-	defineConstant("teInitialCount", 1); // initial number of TEs
 	defineConstant("a", 0.02);
-	
-	defineConstant("u", 0.01); // TE jump probability
-	defineConstant("k", 0.2); // silencing efficiency 	
-	defineConstant("s", -0.001);
-	defineConstant("b", 0);
-	
-	defineConstant("Ectopic_Rec_rate", 1e-3);
-
-	defineConstant("r", 1e-6);
-	initializeRecombinationRate(r);
 	
 		// set up our chromosome: 10 QTLs, surrounded by neutral regions
 defineConstant("C", 1); // number of QTLs
 defineConstant("distance", asInteger(L/(C+1)));
-defineConstant("EffectSize", 0.5);//0.5 for enhancing alleles, -0.5 for weakening alleles
 pos = 0;
 q = NULL;
 for (i in 1:C)
@@ -29,9 +28,7 @@ q = c(q, pos);
 }
 defineConstant("Q", q); // remember our QTL positions
 	
-	
 	initializeMutationRate(0);
-
 	// m1 mutation type: neutral
 	initializeMutationType("m1", 0.5, "f", 0.0);
 	// g1 genomic element type: uses m1 for all mutations
@@ -51,7 +48,7 @@ m3.convertToSubstitution = F;
 
 // create a population
 1 late(){
-sim.outputFull("/dfs7/grylee/yuhenh3/TE_simulations/tmp/FullOutput_5000_additive_ectopic_recombination"+s+"_"+b+"_"+u+"_"+k+"_"+r+"_"+".txt");
+sim.readFromPopulationFile("/dfs7/grylee/yuhenh3/TE_simulations/tmp/FullOutput_5000_additive_ectopic_recombination"+u+"_"+k+"_"+s+"_"+b+"_"+r+"_"+Ectopic_Rec_rate+"_"+Ect_sup_threshold+"_replicat"+replicat+".txt");
 
 	sim.tag = 0; // the next unique tag value to use for TEs
 // create some transposons at random positions
@@ -86,7 +83,9 @@ if (teCount>0)
 for (te in tes)
 {
 slience_mag=te.getValue("M");
-if (slience_mag < 5)//remove this if condition when TE silencing not suppresses ectopic recombination
+if (slience_mag < Ect_sup_threshold)
+//if (slience_mag < 4)
+
 {
 te_num_NoEpi=te_num_NoEpi+1;
 }
@@ -99,7 +98,8 @@ tes = individual.genomes[0].mutationsOfType(m2);
 for (te in tes)
 {
 slience_mag=te.getValue("M");
-if (slience_mag < 5) //remove this if condition when TE silencing not suppresses ectopic recombination
+if (slience_mag < Ect_sup_threshold)
+//if (slience_mag < 4)
 {
 focalPosition = te.position;
 alter_tes = individual.genomes[1].mutationsOfType(m2);
@@ -118,7 +118,8 @@ tes = individual.genomes[1].mutationsOfType(m2);
 for (te in tes)
 {
 slience_mag=te.getValue("M");
-if (slience_mag < 5) //remove this if condition when TE silencing not suppresses ectopic recombination
+if (slience_mag < Ect_sup_threshold)
+//if (slience_mag < 4)
 {
 focalPosition = te.position;
 alter_tes = individual.genomes[0].mutationsOfType(m2);
@@ -144,15 +145,15 @@ return 0.0;
 }
 }
 
-1002:10002 early() {
+5002:10002 early() {
 meanFitness = mean(p1.cachedFitness(NULL));
 line = paste(sim.cycle,meanFitness,"mean_fitness", replicat);
-file=paste("/dfs7/grylee/yuhenh3/TE_simulations/invade_enhancing_Magnitude_TE_additive_with_ectopci_recombination",s,b,u,k,r,sep = "_");
+file=paste("/dfs7/grylee/yuhenh3/TE_simulations/invade_weakening_Magnitude_TE_additive_with_ectopic_recombination",u,k,s,b,r,Ectopic_Rec_rate,Ect_sup_threshold,sep = "_");
 writeFile(file, line, append=T);
 }
 
 
-1000:10001 late() {
+5000:10001 late() {
 inds = sim.subpopulations.individuals;
 additive = inds.countOfMutationsOfType(m2);
 mean_A = mean(additive);
@@ -179,7 +180,7 @@ f = sim.mutationFrequencies(NULL, qtls);
 
 line1 = paste(sim.cycle,mean_A, V_A, TE_Freq_mean, replicat);
 line2 = paste(sim.cycle, M_mean, f, "modifier_Freq",replicat);
-file=paste("/dfs7/grylee/yuhenh3/TE_simulations/invade_enhancing_Magnitude_TE_additive_with_ectopci_recombination",s,b,u,k,r,sep = "_");
+file=paste("/dfs7/grylee/yuhenh3/TE_simulations/invade_weakening_Magnitude_TE_additive_with_ectopic_recombination",u,k,s,b,r,Ectopic_Rec_rate,Ect_sup_threshold,sep = "_");
 writeFile(file, line1, append=T);
 writeFile(file, line2, append=T);
 }
@@ -200,7 +201,7 @@ te_sliencing = te.getValue("M");
 //te_sliencing = te.tag;
 if (te_sliencing*k<1)
 {
-jumpCount = rpois(1, teJumpP*(1-te_sliencing*k));
+jumpCount = rpois(1, u*(1-te_sliencing*k));
 
 if (jumpCount>0)
 {
